@@ -170,6 +170,8 @@ class message {
 		// delete returned data from helper
 		self::remove($type, $tag);
 
+		self::save();
+
 		return $result;
 	}
 
@@ -254,6 +256,8 @@ class message {
 			// remove supplied type only
 			self::remove($type, $tag);
 		}
+
+		self::save();
 	}
 
 /**
@@ -272,6 +276,7 @@ class message {
 			$result = self::$data['custom'];
 			// dont forget to clear data!
 			self::remove('custom');
+			self::save();
 			return $result;
 		}
 
@@ -281,6 +286,7 @@ class message {
 			// get tagged value and delete it from data
 			$result = self::$data['custom'][$tag];
 			self::remove('custom', $tag);
+			self::save();
 			return $result;
 		}
 		else return $default;
