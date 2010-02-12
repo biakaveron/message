@@ -57,12 +57,10 @@ class message {
 	/*
 	 * Initial data loading
 	 */
-	static public function init() {
-
-		// dont work with ignored routes!
-		foreach(self::$ignored_routes as $route_name)
+	static public function init()
+	{
+		if (in_array(Route::name(Request::instance()->route), self::$ignored_routes))
 		{
-			if (Route::get($route_name) === Request::instance()->route)
 				return FALSE;
 		}
 
@@ -72,7 +70,7 @@ class message {
 		self::$_session = Session::instance();
 
 		// load session data
-		self::$_olddata = self::$_session->get(self::$_session_var);
+		self::$_olddata = self::$_session->get(self::$_session_var, FALSE);
 		// clear session data
 		self::$_session->delete(self::$_session_var);
 
@@ -200,6 +198,15 @@ class message {
 			// full data request
 			$result = self::$_data;
 			self::clear();
+			return $result;
+		}
+		if (is_array($type))
+		{
+			$result = array();
+			foreach($type as $t)
+			{
+				$result[$t] = self::get_type($t);
+			}
 			return $result;
 		}
 
@@ -342,6 +349,29 @@ class message {
 	}
 
 /**
+ * Returns array of system messages (useful for AJAX requests)
+ */
+	static public function export()
+	{
+		$types = array
+		(
+			message::ERROR,
+			message::INFO,
+			message::NOTICE,
+			message::SUCCESS,
+		);
+
+		$result = array();
+
+		foreach($types as $type)
+		{
+			$result[$type] = self::get_type($type);
+		}
+
+		return $result;
+	}
+
+/**
  * Shows message box with supplied type and tagname
  *
  * @param   string   $type   data type to render
@@ -397,6 +427,23 @@ class message {
 		if (is_null($tag))
 			return (bool)count(self::$_data[$type]);
 		else return isset(self::$_data[$type][$tag]);
+	}
+
+/**
+ *
+ * Throws message immediately, without saving in $_data property.
+ *
+ * @param mixed   $message    message data
+ * @param string  $type       message type (message constants recommended)
+ * @param string  $template   template name
+ */
+	static public function flash($message, $type = message::NOTICE, $template = NULL)
+	{
+		if (is_null($template))
+		{
+			$template = self::$_template;
+		}
+		echo View::factory($template, array('data' => array($message), 'type' => $type, 'inline'=>NULL));
 	}
 
 }
