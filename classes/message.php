@@ -9,19 +9,14 @@
  * @property	Session		$session
  * @property	View		$template
  *
- * @package    CMS
+ * @package    CMS Core
  * @author     Brotkin Ivan (BIakaVeron) <BIakaVeron@gmail.com>
  * @copyright  Copyright (c) 2009 Brotkin Ivan
  */
 
-class message {
-
-/*
- * @property Session $session
- *
- */
-
-	// all helper data
+class message
+{
+	// all helper data (messages)
 	static protected $_data = array();
 	// array for previous requests data
 	static protected $_olddata = array();
@@ -35,33 +30,38 @@ class message {
 	static protected $_session_var = 'message_container';
 	// session object
 	static protected $_session = FALSE;
-
+	// TRUE if data was initialized (loaded from Session)
 	static protected $_loaded = FALSE;
-
+	// TRUE if data was saved in Session
 	static protected $_saved = FALSE;
 
+	// some URLs (like media) can be skipped to avoid message deleting
 	static public $ignored_routes = array();
 
-	const SUCCESS			= 'success';
-	const ERROR				= 'error';
-	const VALIDATION	= 'validation';
-	const NOTICE			= 'notice';
-	const INFO				= 'info';
-	const CUSTOM			= 'custom';
+	// message types
+	const SUCCESS     = 'success';
+	const ERROR       = 'error';
+	const VALIDATION  = 'validation';
+	const NOTICE      = 'notice';
+	const INFO        = 'info';
+	const CUSTOM      = 'custom';
 
-
-	public static function dump() {
+/**
+ * Dumps all messages. For tests only!
+ */
+	public static function dump()
+	{
 		var_dump(self::$_data);
 	}
 
-	/*
+	/**
 	 * Initial data loading
 	 */
 	static public function init()
 	{
 		if (in_array(Route::name(Request::instance()->route), self::$ignored_routes))
 		{
-				return FALSE;
+			return FALSE;
 		}
 
 		// don't call init() twice!
@@ -74,7 +74,8 @@ class message {
 		// clear session data
 		self::$_session->delete(self::$_session_var);
 
-		if (empty(self::$_olddata)) {
+		if (self::$_olddata == FALSE)
+		{
 			// create empty array - there is no data
 			self::$_olddata = array();
 		}
@@ -88,7 +89,8 @@ class message {
  * Save data in session. Saves new data only ($added array)
  *
  */
-	static public function save() {
+	static public function save()
+	{
 		if ( !self::$_loaded OR self::$_saved) return FALSE;
 
 		self::$_session->set(self::$_session_var, self::$_newdata);
@@ -100,8 +102,8 @@ class message {
  * Save "old" custom tag with "new" values
  *
  */
-	public static function save_tag($tag) {
-
+	public static function save_tag($tag)
+	{
 		if (isset(self::$_newdata[message::CUSTOM][$tag]))
 		{
 			return FALSE;
@@ -123,7 +125,8 @@ class message {
  *
  */
 
-	static public function save_all() {
+	static public function save_all()
+	{
 		if (self::$_saved) return FALSE;
 
 		self::$_session->set(self::$_session_var, self::$_data);
@@ -132,12 +135,13 @@ class message {
 
 /**
  *
- * Sets new template.
+ * Apply new template.
  *
  * @param string $template   new template name
  */
 
-	static public function set_template($template = 'default') {
+	static public function set_template($template = 'default')
+	{
 		self::$_template = 'messages/'.$template;
 	}
 
@@ -148,14 +152,18 @@ class message {
  * @param string $type   which type of messages will we syncronize
  */
 
-	static private function sync($type = NULL) {
-		if (is_null($type)) {
+	static private function sync($type = NULL)
+	{
+		if (is_null($type))
+		{
 			// sync all data
 			self::$_data = self::$_olddata + self::$_newdata;
 		}
-		else {
+		else
+		{
 			// sync $type messages only
-			self::$_data[$type] = (isset(self::$_olddata[$type]) ? self::$_olddata[$type] : array()) + (isset(self::$_newdata[$type]) ? self::$_newdata[$type] : array());
+			self::$_data[$type] = (isset(self::$_olddata[$type]) ? self::$_olddata[$type] : array())
+			                    + (isset(self::$_newdata[$type]) ? self::$_newdata[$type] : array());
 		}
 	}
 
@@ -169,16 +177,19 @@ class message {
  * @param string $tag     tagname to remove one value
  */
 
-	static private function remove($type, $tag = NULL) {
-		if (is_null($tag)) {
+	static private function remove($type, $tag = NULL)
+	{
+		if (is_null($tag))
+		{
 			// remove all data
-			if (isset(self::$_data[$type])) unset(self::$_data[$type]);
-			if (isset(self::$_newdata[$type])) unset(self::$_newdata[$type]);
-			if (isset(self::$_olddata[$type])) unset(self::$_olddata[$type]);
+			if (isset(self::$_data[$type]))          unset(self::$_data[$type]);
+			if (isset(self::$_newdata[$type]))       unset(self::$_newdata[$type]);
+			if (isset(self::$_olddata[$type]))       unset(self::$_olddata[$type]);
 		}
-		else {
+		else
+		{
 			// remove only $type data (with $tag checking)
-			if (isset(self::$_data[$type][$tag])) unset(self::$_data[$type][$tag]);
+			if (isset(self::$_data[$type][$tag]))    unset(self::$_data[$type][$tag]);
 			if (isset(self::$_newdata[$type][$tag])) unset(self::$_newdata[$type][$tag]);
 			if (isset(self::$_olddata[$type][$tag])) unset(self::$_olddata[$type][$tag]);
 		}
@@ -193,10 +204,13 @@ class message {
  * @return array
  */
 
-	static public function get_type($type = NULL, $tag = NULL) {
-		if (is_null($type)) {
+	static public function get_type($type = NULL, $tag = NULL)
+	{
+		if (is_null($type))
+		{
 			// full data request
 			$result = self::$_data;
+			// delete messages
 			self::clear();
 			return $result;
 		}
@@ -213,12 +227,20 @@ class message {
 		// check for data of supplied type
 		if (!isset(self::$_data[$type])) return array();
 
-		if (isset($tag)) {
+		if (isset($tag))
+		{
 			// returns one value if tagname supplied
-			if (!isset(self::$_data[$type][$tag])) return array();
-			else $result = array(self::$_data[$type][$tag]);
+			if (!isset(self::$_data[$type][$tag]))
+			{
+				return array();
+			}
+			else
+			{
+				$result = array(self::$_data[$type][$tag]);
+			}
 		}
-		else {
+		else
+		{
 			// get all data of this type
 			$result = self::$_data[$type];
 		}
@@ -235,10 +257,13 @@ class message {
  * @param string       $type     data type
  */
 
-	static public function add($message, $type = message::INFO) {
-		if (is_array($message)) {
+	static public function add($message, $type = message::INFO)
+	{
+		if (is_array($message))
+		{
 			// save data as $key=>$value
-			if (isset(self::$_newdata[$type])) {
+			if (isset(self::$_newdata[$type]))
+			{
 				// this data type array already exists
 				self::$_newdata[$type] += $message;
 			}
@@ -249,20 +274,19 @@ class message {
 		}
 		else {
 			// its a string data
-			if (!isset(self::$_newdata[$type])) {
+			if (!isset(self::$_newdata[$type]))
+			{
 				// there is no such type data
 				self::$_newdata[$type][] = $message;
 			}
-			elseif (!in_array($message, self::$_newdata[$type])) {
+			elseif (!in_array($message, self::$_newdata[$type]))
+			{
 				// add message string
 				self::$_newdata[$type][] = $message;
 			}
 		}
-
 		// sync data after every change
 		self::sync($type);
-
-		//self::save();
 	}
 
 /**
@@ -272,36 +296,31 @@ class message {
  * Data key will be a fieldname, value - array($rule, $params)
  *
  * @param array  $errors        validation errors
- * @param string $i18n_file   i18n filename
+ * @param string $i18n_file     i18n filename
  */
 
-	static public function add_validation(array $errors, $i18n_prefix = FALSE) {
+	static public function add_validation(array $errors, $i18n_prefix = FALSE)
+	{
 		$result = array();
-/*
-		if ($i18n_file !== FALSE) {
-		// collecting error messages in result array
-			foreach($errors as $key => $value)
-				$result[$key] = Kohana::lang($i18n_file.".".$key.".".$value);
-		}
-		else $result = $errors;*/
+
 		$prefix = $i18n_prefix ? $i18n_prefix.'.'.$key.'.' : '';
 
 		foreach($errors as $key => $value)
 			$result[$key] = __($prefix.$value);
 		// add errors to $added array with validation type
 		self::add($result, message::VALIDATION);
-
-		//self::save();
 	}
 
 /**
  *
  * Delete all storing data (possible by type and tagname)
  *
- * @param string $type  data type to delete
+ * @param  string  $type  data type to delete (optional). Clears all messages if not set.
+ * @param  string  $tag   tag name (optional). Clears all messages with $type applied
  */
 
-	static public function clear($type = NULL, $tag = NULL) {
+	static public function clear($type = NULL, $tag = NULL)
+	{
 		if (is_null($type)) {
 			// remove all data
 			self::$_data = self::$_newdata = self::$_olddata = array();
@@ -321,17 +340,18 @@ class message {
  * @return string|array
  */
 
-	static public function custom($tag = NULL, $default = NULL) {
+	static public function custom($tag = NULL, $default = NULL)
+	{
 		if (is_null($tag)) {
 			// returns all custom data
-			if (!isset(self::$_data[message::CUSTOM])) return array();
+			if ( ! isset(self::$_data[message::CUSTOM])) return $default;
 			$result = self::$_data[message::CUSTOM];
 			// dont forget to clear data!
 			self::remove(message::CUSTOM);
 			return $result;
 		}
 
-		if (!isset(self::$_data[message::CUSTOM])) return $default;
+		if ( ! isset(self::$_data[message::CUSTOM])) return $default;
 		// check for existing
 		if (isset(self::$_data[message::CUSTOM][$tag])) {
 			// get tagged value and delete it from data
@@ -379,16 +399,19 @@ class message {
  * @return  boolean          FALSE if there was no rendering
  */
 
-	static public function render($type = NULL, $tag = NULL) {
+	static public function render($type = NULL, $tag = NULL)
+	{
 		// check for data
 		if (count(self::$_data)==0) return FALSE;
 
 		// custom data may use in form submitting for example
 		if ($type == message::CUSTOM) return FALSE;
 
-		if (is_null($type)) {
+		if (is_null($type))
+		{
 			// render all data by existing types
-			foreach(self::$_data as $type=>$value) {
+			foreach(self::$_data as $type=>$value)
+			{
 				self::render($type, $tag);
 			}
 			return TRUE;
@@ -413,11 +436,14 @@ class message {
 		return TRUE;
 	}
 
-	static public function has($type = message::ERROR, $tag = NULL) {
+	static public function has($type = message::ERROR, $tag = NULL)
+	{
 		if (is_array($type))
 		{
 			foreach($type as $mess_type)
+			{
 				if (self::has($mess_type, $tag)) return TRUE;
+			}
 
 			return FALSE;
 		}
@@ -425,8 +451,13 @@ class message {
 		if ( !isset(self::$_data[$type])) return FALSE;
 
 		if (is_null($tag))
+		{
 			return (bool)count(self::$_data[$type]);
-		else return isset(self::$_data[$type][$tag]);
+		}
+		else
+		{
+			return isset(self::$_data[$type][$tag]);
+		}
 	}
 
 /**
